@@ -18,6 +18,8 @@ public struct TweakWindowGroup<Content: View>: Scene {
 	public enum GestureType {
 		/// Shake the device, like you're trying to undo some text
 		case shake
+        /// Panswipe from right
+        case panSwipe
 	}
 
 	/// The GestureType used to determine when to present the UI.
@@ -31,6 +33,8 @@ public struct TweakWindowGroup<Content: View>: Scene {
 	@State private var showingTweaks: Bool = false
 	/// Whether or not the device is currently being shaken.
 	@State private var shaking: Bool = false
+
+    @State private var dragStartX: CGFloat?
 
 	/// The amount of time you need to shake your device to bring up the Tweaks UI
 	private let shakeWindowTimeInterval: TimeInterval = 0.4
@@ -46,32 +50,63 @@ public struct TweakWindowGroup<Content: View>: Scene {
 	}
 
 	public var body: some Scene {
-		WindowGroup {
-			VStack {
-				content()
-			}
-			.sheet(isPresented: $showingTweaks) {
-				TweaksViewRepresentable(
-					tweakStore: tweakStore,
-					showingTweaks: $showingTweaks
-				)
-			}
-			.if(gestureType == .shake && tweakStore.enabled) { view in
-				view.onShake { phase in
-					switch phase {
-					case .began:
-						shaking = true
-						DispatchQueue.main.asyncAfter(deadline: .now() + shakeWindowTimeInterval) {
-							if self.shouldShakePresentTweaks {
-								self.showingTweaks = true
-							}
-						}
-					case .ended:
-						shaking = false
-					}
-				}
-			}
-		}
+        WindowGroup {
+            ZStack {
+                content()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea()
+            .sheet(isPresented: $showingTweaks) {
+                TweaksViewRepresentable(
+                    tweakStore: tweakStore,
+                    showingTweaks: $showingTweaks
+                )
+            }
+            .if(gestureType == .shake && tweakStore.enabled) { view in
+                view.onShake { phase in
+                    switch phase {
+                    case .began:
+                        shaking = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + shakeWindowTimeInterval) {
+                            if self.shouldShakePresentTweaks {
+                                self.showingTweaks = true
+                            }
+                        }
+                    case .ended:
+                        shaking = false
+                    }
+                }
+            }
+            .if(gestureType == .panSwipe && tweakStore.enabled) { view in
+                view
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                print(value)
+                                guard dragStartX == nil else { return }
+                                let screenWidth = UIScreen.main.bounds.width
+                                if value.startLocation.x > screenWidth * 0.9 {
+                                    dragStartX = value.startLocation.x
+                                }
+                            }
+                            .onEnded { value in
+                                print(value)
+                                if let startX = dragStartX {
+                                    let endX = value.location.x
+                                    let dragDistance = startX - endX
+                                    let requiredDistance = UIScreen.main.bounds.width * 0.7
+
+                                    if dragDistance >= requiredDistance {
+                                        withAnimation {
+                                            self.showingTweaks = true
+                                        }
+                                    }
+                                }
+                                dragStartX = nil
+                            }
+                    )
+            }
+        }
 	}
 }
 
@@ -91,6 +126,7 @@ fileprivate extension TweakWindowGroup {
 		if tweakStore.enabled {
 			switch gestureType {
 			case .shake: return shaking || runningInSimulator
+            case .panSwipe: return false
 			}
 		} else {
 			return false

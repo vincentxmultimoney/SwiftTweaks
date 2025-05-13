@@ -20,7 +20,7 @@ public final class TweaksViewController: UIViewController {
 
 	private var navController: UINavigationController! // self required for init
 
-	public unowned var delegate: TweaksViewControllerDelegate
+	public weak var delegate: TweaksViewControllerDelegate?
 	internal var floatingTweaksWindowPresenter: FloatingTweaksWindowPresenter?
 
 	public init(tweakStore: TweakStore, delegate: TweaksViewControllerDelegate) {
@@ -45,7 +45,7 @@ public final class TweaksViewController: UIViewController {
 
 fileprivate extension TweaksViewController {
 	func displayFloatingTweakPanel(forTweakGroup tweakGroup: TweakGroup) {
-		delegate.tweaksViewControllerRequestsDismiss(self) {
+		delegate?.tweaksViewControllerRequestsDismiss(self) {
 			self.floatingTweaksWindowPresenter?.presentFloatingTweaksUI(forTweakGroup: tweakGroup)
 		}
 	}
@@ -60,7 +60,7 @@ extension TweaksViewController: TweaksCollectionsListViewControllerDelegate {
 	}
 
 	func tweaksCollectionsListViewControllerDidTapDismissButton(_ tweaksCollectionsListViewController: TweaksCollectionsListViewController) {
-		delegate.tweaksViewControllerRequestsDismiss(self, completion: nil)
+        self.dismiss(animated: true)
 	}
 
 	func tweaksCollectionsListViewControllerDidTapShareButton(
