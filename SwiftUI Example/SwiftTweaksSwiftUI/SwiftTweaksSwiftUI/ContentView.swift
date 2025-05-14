@@ -9,8 +9,16 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        Color(uiColor: ExampleTweaks.assign(ExampleTweaks.colorTint))
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        ZStack {
+            Color.red.frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea()
+            VStack {
+                Text("Texting")
+                Spacer()
+            }
+        }
+
+
     }
 }
 

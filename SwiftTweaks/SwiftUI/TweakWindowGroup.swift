@@ -51,11 +51,8 @@ public struct TweakWindowGroup<Content: View>: Scene {
 
 	public var body: some Scene {
         WindowGroup {
-            ZStack {
-                content()
-            }
+            content()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .ignoresSafeArea()
             .sheet(isPresented: $showingTweaks) {
                 TweaksViewRepresentable(
                     tweakStore: tweakStore,
@@ -82,7 +79,6 @@ public struct TweakWindowGroup<Content: View>: Scene {
                     .gesture(
                         DragGesture()
                             .onChanged { value in
-                                print(value)
                                 guard dragStartX == nil else { return }
                                 let screenWidth = UIScreen.main.bounds.width
                                 if value.startLocation.x > screenWidth * 0.9 {
@@ -90,7 +86,6 @@ public struct TweakWindowGroup<Content: View>: Scene {
                                 }
                             }
                             .onEnded { value in
-                                print(value)
                                 if let startX = dragStartX {
                                     let endX = value.location.x
                                     let dragDistance = startX - endX
